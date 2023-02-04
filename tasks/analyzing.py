@@ -20,7 +20,7 @@ class City(NamedTuple):
 
 class DataAnalyzingTask:
     
-    __slots__ = ('_data', '_results', '_queue')
+    __slots__ = '_data', '_results', '_queue'
 
     def __init__(self, data: dict) -> None:
         self._data = data
@@ -29,7 +29,7 @@ class DataAnalyzingTask:
         
     def run(self) -> None:
         """
-        Метод производит анализ данных о погоде для каждого из городов. Расчётт производится в
+        Метод производит анализ данных о погоде для каждого из городов. Расчёт производится в
         отдельном процессе. Результаты доступны через очередь.
         """
         for city_name, city_data in self._data.items():
@@ -61,5 +61,9 @@ class DataAnalyzingTask:
     
     @property
     def result(self) -> list[City]:
+        """
+        Возвращает результаты анализа данных о погоде
+        :return: список объектов City
+        """
         return self._results
         

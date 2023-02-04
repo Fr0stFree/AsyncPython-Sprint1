@@ -1,4 +1,4 @@
-import logging
+import logging.config
 import threading
 import multiprocessing
 from multiprocessing.queues import Queue
@@ -6,13 +6,10 @@ from multiprocessing.queues import Queue
 
 from tasks import DataFetchingTask, DataCalculationTask, DataAggregationTask, DataAnalyzingTask
 from utils import CITIES
+from settings import LOGGING
 
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    datefmt="%d-%b-%y %H:%M:%S",
-                    handlers=[logging.FileHandler('forecasting.log'),
-                              logging.StreamHandler()])
+logging.config.dictConfig(LOGGING)
 
 
 if __name__ == "__main__":

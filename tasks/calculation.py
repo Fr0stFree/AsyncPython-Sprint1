@@ -1,5 +1,5 @@
 import logging
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from multiprocessing.queues import Queue
 
 from exceptions import IncompleteDataError
@@ -13,11 +13,11 @@ class City(NamedTuple):
     name: str
     date: str
     avg_temperature: float
-    avg_good_weather_hours: float
+    good_weather_hours: int
     
     def __str__(self):
         return f'{self.name} at {self.date}: {self.avg_temperature} °C, ' \
-               f'{self.avg_good_weather_hours} благоприятных часов'
+               f'{self.good_weather_hours} благоприятных часов'
 
 
 class DataCalculationTask:
@@ -25,20 +25,22 @@ class DataCalculationTask:
     MAX_HOUR = 19
     ACCEPTABLE_WEATHER_CONDITIONS = ('clear', 'partly-cloudy', 'cloudy', 'overcast')
     
-    __slots__ = '_day_data', '_city_name', '_date', '_average_temp', '_good_weather_hours', '_queue'
+    __slots__ = ('_day_data', '_city_name', '_date', '_average_temp', '_good_weather_hours',
+                 '_queue', '_result')
     
-    def __init__(self, city_name: str, data: dict, queue: Queue) -> None:
+    def __init__(self, city_name: str, data: dict, queue: Optional[Queue] = None) -> None:
         self._day_data: dict = data['hours']
         self._city_name: str = city_name
         self._date: str = data['date']
         self._average_temp: float | None = None
         self._good_weather_hours: int = 0
         self._queue = queue
+        self._result = None
     
     def run(self) -> None:
         """
         Метод рассчитывает среднюю температуру и количество благоприятных часов за указанный день.
-        В случае успеха, результат помещается в очередь.
+        В случае успеха, результат помещается в очередь (если она передана в конструкторе).
         """
         logger.info('Calculating data for %s. Date: %s.', self._city_name, self._date)
         try:
@@ -47,8 +49,10 @@ class DataCalculationTask:
             return
         self._calculate_avg_temp()
         self._calculate_good_weather_hours()
-        result = City(self._city_name, self._date, self._average_temp, self._good_weather_hours)
-        self._queue.put(result)
+        self._result = City(self._city_name, self._date, self._average_temp,
+                            self._good_weather_hours)
+        if self._queue:
+            self._queue.put(self._result)
         logger.info('Data for %s calculated successfully. Date: %s. '
                     'Avg temp: %s. Good weather hours: %s.',
                     self._city_name, self._date, self._average_temp, self._good_weather_hours)
@@ -71,6 +75,10 @@ class DataCalculationTask:
                          self._city_name, self._date, len(self._day_data))
             raise IncompleteDataError('Incorrect data for %s in %s. Expected 24 hours, got %s.',
                                       self._city_name, self._date, len(self._day_data))
+    
+    @property
+    def result(self) -> City:
+        return self._result
     
     @classmethod
     def _is_weather_good(cls, condition: str) -> bool:

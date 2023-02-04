@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 
 from api_client import YandexWeatherAPI
-
+from exceptions import BadAPIResponseError, InvalidRequestDataError
 
 logger = logging.getLogger(__name__)
 
@@ -24,19 +24,23 @@ class DataFetchingTask:
         logger.info('Fetching data for %s.', self._city_name)
         try:
             resp = self.ywAPI.get_forecasting(self._city_name)
-        except Exception as ex:
-            error_msg = 'Error during fetching data for %s: %s.', self._city_name, ex
+        except InvalidRequestDataError as error_msg:
             logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvalidRequestDataError(error_msg)
+        except BadAPIResponseError as error_msg:
+            logger.error(error_msg)
+            raise BadAPIResponseError(error_msg)
         self._data = resp
         logger.info('Data for %s fetched successfully.', self._city_name)
     
     @property
-    def result(self) -> tuple[str, Optional[dict]]:
+    def result(self) -> tuple[str, dict] | None:
         """
         Метод возвращает название города и данные, полученные в результате запроса.
         :return: Кортеж из названия города и словаря с данными о погоде.
         """
-        return self._city_name, self._data
+        if self._data is not None:
+            return self._city_name, self._data
+        return self._data
 
 

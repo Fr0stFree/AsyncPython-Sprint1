@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 class DataAggregationTask:
     STORAGE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'storage.json')
     
-    __slots__ = ('_city_name', '_date', '_avg_temp', '_good_weather_hours')
+    __slots__ = '_city_name', '_date', '_avg_temp', '_good_weather_hours'
     
     def __init__(self, city: City) -> None:
         self._city_name: str = city.name
         self._date: str = city.date
         self._avg_temp: float = city.avg_temperature
-        self._good_weather_hours: float = city.avg_good_weather_hours
+        self._good_weather_hours: int = city.good_weather_hours
     
     def run(self) -> None:
         """Метод для агрегации данных. Сохраняет в хранилище полученные данные."""
